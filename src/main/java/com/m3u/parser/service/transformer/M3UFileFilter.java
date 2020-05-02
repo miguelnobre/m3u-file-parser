@@ -3,9 +3,7 @@ package com.m3u.parser.service.transformer;
 import com.m3u.parser.controller.model.M3UChanel;
 import com.m3u.parser.controller.model.M3UDocument;
 import com.m3u.parser.controller.model.M3UGroup;
-import io.reactivex.functions.Function;
-import lombok.Builder;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 import java.util.Comparator;
 import java.util.HashSet;
@@ -14,11 +12,24 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
-public class M3UFileFilter implements Function<M3UDocument, M3UDocument> {
+public class M3UFileFilter {
+
+    private static M3UFileFilter DEFAULT_FILTER = null;
 
     private final M3UFileFilterBuilder filter;
 
-    public M3UDocument filter(M3UDocument originalDocument, M3UFileFilterBuilder filter) {
+    public static M3UFileFilter getDefaultFilter() {
+        if (DEFAULT_FILTER == null) {
+            DEFAULT_FILTER = new M3UFileFilter(new M3UFileFilterBuilder());
+        }
+        return DEFAULT_FILTER;
+    }
+
+    public static M3UFileFilter from(M3UFileFilterBuilder filter) {
+        return new M3UFileFilter(filter);
+    }
+
+    public M3UDocument filter(M3UDocument originalDocument) {
         M3UDocument filteredDocument = M3UDocument.builder()
                 .initialLine(originalDocument.getInitialLine())
                 .build();
@@ -45,16 +56,9 @@ public class M3UFileFilter implements Function<M3UDocument, M3UDocument> {
         return filteredDocument;
     }
 
-    public static M3UFileFilter withParams(Set<String> categoryFilter) {
-        return new M3UFileFilter(M3UFileFilterBuilder.builder().categoryFilter(categoryFilter).build());
-    }
-
-    @Override
-    public M3UDocument apply(M3UDocument m3UDocument) {
-        return this.filter(m3UDocument, this.filter);
-    }
-
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static class M3UFileFilterBuilder {
         @Builder.Default
         final Set<String> categoryFilter = new HashSet<>();

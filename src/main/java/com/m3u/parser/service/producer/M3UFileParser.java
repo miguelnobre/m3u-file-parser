@@ -2,10 +2,10 @@ package com.m3u.parser.service.producer;
 
 import com.m3u.parser.controller.enums.EChannelQuality;
 import com.m3u.parser.controller.model.*;
-import io.reactivex.functions.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -16,16 +16,13 @@ import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
-@RequiredArgsConstructor
+
 @Slf4j
-public class M3UFileParser implements Supplier<M3UDocument> {
+@Service
+@RequiredArgsConstructor
+public class M3UFileParser {
 
     private static Pattern CHANNEL_NAME_PATTERN = Pattern.compile("#+\\s+(.*?)\\s+#+");
-    private final URL fileLocation;
-
-    public static M3UFileParser fileParserFromUrl(URL fileLocation) {
-        return new M3UFileParser(fileLocation);
-    }
 
     @SneakyThrows
     private M3UAttributes getLineAttributes(String line) {
@@ -157,10 +154,5 @@ public class M3UFileParser implements Supplier<M3UDocument> {
                 .initialLine(initialLine)
                 .groupList(List.copyOf(groupMap.values()))
                 .build();
-    }
-
-    @Override
-    public M3UDocument get() throws Throwable {
-        return this.parse(this.fileLocation);
     }
 }

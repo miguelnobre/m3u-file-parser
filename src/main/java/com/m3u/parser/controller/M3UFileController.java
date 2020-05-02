@@ -25,7 +25,7 @@ public class M3UFileController {
     private final M3UDownloadFileService m3UDownloadFileService;
 
     @SneakyThrows
-    @GetMapping(value = "download", produces = {"application/pdf"})
+    @GetMapping("download")
     @ApiOperation(value = "Download M3U file", notes = "Filter and download m3u file")
     public void download(@RequestParam String fileUrl,
                          @RequestParam(required = false, defaultValue = "") Set<String> categoryFilter,
