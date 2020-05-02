@@ -1,18 +1,17 @@
-package com.m3u.parser.service;
+package com.m3u.parser.service.transformer;
 
 import com.m3u.parser.controller.model.M3UChanel;
 import com.m3u.parser.controller.model.M3UChanelGroup;
 import com.m3u.parser.controller.model.M3UDocument;
 import com.m3u.parser.controller.model.M3UGroup;
+import io.reactivex.functions.Function;
 import lombok.SneakyThrows;
-import org.springframework.stereotype.Service;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 
-@Service
-public class M3UFileWriter {
+public class M3UFileWriter implements Function<M3UDocument, File> {
 
     @SneakyThrows
     public File generateOutput(M3UDocument document) {
@@ -36,4 +35,10 @@ public class M3UFileWriter {
 
         return temp;
     }
+
+    @Override
+    public File apply(M3UDocument m3UDocument) throws Throwable {
+        return this.generateOutput(m3UDocument);
+    }
+
 }

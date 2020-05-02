@@ -1,9 +1,11 @@
-package com.m3u.parser.service;
+package com.m3u.parser.service.producer;
 
 import com.m3u.parser.controller.enums.EChannelQuality;
 import com.m3u.parser.controller.model.*;
+import io.reactivex.functions.Supplier;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import org.springframework.stereotype.Service;
+import lombok.extern.slf4j.Slf4j;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -14,56 +16,15 @@ import java.util.regex.Pattern;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
-@Service
-public class M3UFileParser {
+@RequiredArgsConstructor
+@Slf4j
+public class M3UFileParser implements Supplier<M3UDocument> {
 
     private static Pattern CHANNEL_NAME_PATTERN = Pattern.compile("#+\\s+(.*?)\\s+#+");
+    private final URL fileLocation;
 
-    @SneakyThrows
-    public M3UDocument parse(URL fileLocation) {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(fileLocation.openStream()));
-        Map<String, M3UGroup> groupMap = new HashMap<>();
-        Map<String, M3UChanelGroup> channelsGroupMap = new HashMap<>();
-
-        String initialLine = reader.readLine();
-
-        String line;
-        while ((line = reader.readLine()) != null) {
-            M3UAttributes attributes = getLineAttributes(line);
-
-            M3UChanel channel = M3UChanel.builder()
-                    .attributes(attributes)
-                    .line(line)
-                    .accessUrl(reader.readLine())   // Read next line
-                    .build();
-
-            M3UChanelGroup channelGroup = channelsGroupMap.get(channel.getAttributes().getId());
-            if(channelGroup != null) {
-                channelGroup.getChanelList().add(channel);
-                continue;
-            }
-
-            M3UChanelGroup newChannelGroup = createChannelsGroup(channelsGroupMap, channel.getAttributes().getId());
-            newChannelGroup.getChanelList().add(channel);
-
-            if(isNotBlank(channel.getAttributes().getId())) {
-                channelsGroupMap.putIfAbsent(channel.getAttributes().getId(), newChannelGroup);
-            }
-
-            String groupKey = isNotBlank(channel.getAttributes().getGroupTitle())
-                    ? channel.getAttributes().getGroupTitle()
-                    : getChannelNameSanitized(attributes.getName());
-
-            Optional.ofNullable(groupMap.get(groupKey))
-                    .orElseGet(() -> createGroup(groupMap, groupKey))
-                    .getChanelGroups()
-                    .add(newChannelGroup);
-        }
-
-        return M3UDocument.builder()
-                .initialLine(initialLine)
-                .groupList(List.copyOf(groupMap.values()))
-                .build();
+    public static M3UFileParser fileParserFromUrl(URL fileLocation) {
+        return new M3UFileParser(fileLocation);
     }
 
     @SneakyThrows
@@ -147,5 +108,59 @@ public class M3UFileParser {
         while (matcher.find()) {
             System.out.println("|" + matcher.group(1) + "|");
         }
+    }
+
+    @SneakyThrows
+    public M3UDocument parse(URL fileLocation) {
+        log.info("Reading file from {}", fileLocation.getPath());
+
+        BufferedReader reader = new BufferedReader(new InputStreamReader(fileLocation.openStream()));
+        Map<String, M3UGroup> groupMap = new HashMap<>();
+        Map<String, M3UChanelGroup> channelsGroupMap = new HashMap<>();
+
+        String initialLine = reader.readLine();
+
+        String line;
+        while ((line = reader.readLine()) != null) {
+            M3UAttributes attributes = getLineAttributes(line);
+
+            M3UChanel channel = M3UChanel.builder()
+                    .attributes(attributes)
+                    .line(line)
+                    .accessUrl(reader.readLine())   // Read next line
+                    .build();
+
+            M3UChanelGroup channelGroup = channelsGroupMap.get(channel.getAttributes().getId());
+            if (channelGroup != null) {
+                channelGroup.getChanelList().add(channel);
+                continue;
+            }
+
+            M3UChanelGroup newChannelGroup = createChannelsGroup(channelsGroupMap, channel.getAttributes().getId());
+            newChannelGroup.getChanelList().add(channel);
+
+            if (isNotBlank(channel.getAttributes().getId())) {
+                channelsGroupMap.putIfAbsent(channel.getAttributes().getId(), newChannelGroup);
+            }
+
+            String groupKey = isNotBlank(channel.getAttributes().getGroupTitle())
+                    ? channel.getAttributes().getGroupTitle()
+                    : getChannelNameSanitized(attributes.getName());
+
+            Optional.ofNullable(groupMap.get(groupKey))
+                    .orElseGet(() -> createGroup(groupMap, groupKey))
+                    .getChanelGroups()
+                    .add(newChannelGroup);
+        }
+
+        return M3UDocument.builder()
+                .initialLine(initialLine)
+                .groupList(List.copyOf(groupMap.values()))
+                .build();
+    }
+
+    @Override
+    public M3UDocument get() throws Throwable {
+        return this.parse(this.fileLocation);
     }
 }
