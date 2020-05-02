@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.ws.rs.core.HttpHeaders;
 import java.io.FileInputStream;
-import java.net.URL;
 import java.util.Set;
 
 @RestController
@@ -32,7 +31,7 @@ public class M3UFileController {
     public ResponseEntity download(@RequestParam String fileUrl,
                                    @RequestParam(required = false, defaultValue = "") Set<String> categoryFilter) {
 
-        return this.m3UDownloadFileService.downloadFile(new URL(fileUrl), categoryFilter)
+        return this.m3UDownloadFileService.downloadFile(fileUrl, categoryFilter)
                 .map(file -> ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=etc.m3u")
                         .contentLength(file.length())

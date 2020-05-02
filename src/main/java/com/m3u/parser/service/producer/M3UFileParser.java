@@ -113,12 +113,14 @@ public class M3UFileParser {
         return FILE_TYPE.equalsIgnoreCase(header);
     }
 
-    public M3UDocument parse(URL fileLocation) {
-        log.info("Reading file from {}", fileLocation.getPath());
+    public M3UDocument parse(String fileLocation) {
 
         M3UDocument m3UDocument = null;
 
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(fileLocation.openStream()))) {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new URL(fileLocation).openStream()))) {
+
+            log.info("Reading file from {}", fileLocation);
+
             Map<String, M3UGroup> groupMap = new HashMap<>();
             Map<String, M3UChanelGroup> channelsGroupMap = new HashMap<>();
 
