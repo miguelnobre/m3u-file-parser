@@ -4,6 +4,8 @@ import com.m3u.parser.controller.model.M3UDocument;
 import com.m3u.parser.service.M3UFileFilter;
 import com.m3u.parser.service.M3UFileParser;
 import com.m3u.parser.service.M3UFileWriter;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,6 +22,7 @@ import java.util.Set;
 @RestController
 @AllArgsConstructor
 @RequestMapping("api/")
+@Api(tags = {"M3U file Download API"})
 public class M3UFileController {
 
     private M3UFileParser m3UFileParser;
@@ -28,6 +31,7 @@ public class M3UFileController {
 
     @SneakyThrows
     @GetMapping("download")
+    @ApiOperation(value = "Download M3U file", notes = "Filter and download m3u file")
     public void download(@RequestParam String fileUrl,
                          @RequestParam(required = false, defaultValue = "") Set<String> categoryFilter,
                          HttpServletResponse response) {
