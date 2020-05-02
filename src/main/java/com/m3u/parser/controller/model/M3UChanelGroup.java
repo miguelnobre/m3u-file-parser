@@ -10,7 +10,7 @@ import java.util.List;
 public class M3UChanelGroup {
 
     private String groupIdentifier;
-    private List<M3UChanel> chanelList;
+    private List<M3UChannel> chanelList;
 
     @Override
     public String toString() {

@@ -1,6 +1,6 @@
 package com.m3u.parser.service.transformer;
 
-import com.m3u.parser.controller.model.M3UChanel;
+import com.m3u.parser.controller.model.M3UChannel;
 import com.m3u.parser.controller.model.M3UDocument;
 import com.m3u.parser.controller.model.M3UGroup;
 import lombok.*;
@@ -45,9 +45,9 @@ public class M3UFileFilter {
         // Fetch Best Quality Channel
         filteredGroups.forEach(group -> {
             group.getChanelGroups().forEach(m3UChanelGroup -> {
-                M3UChanel bestQualityChannel = m3UChanelGroup.getChanelList()
+                M3UChannel bestQualityChannel = m3UChanelGroup.getChanelList()
                         .stream()
-                        .max(Comparator.comparing((M3UChanel c) -> c.getAttributes().getChannelQuality().getLevel()))
+                        .max(Comparator.comparing((M3UChannel c) -> c.getAttributes().getChannelQuality().getLevel()))
                         .get();
                 m3UChanelGroup.setChanelList(List.of(bestQualityChannel));
             });

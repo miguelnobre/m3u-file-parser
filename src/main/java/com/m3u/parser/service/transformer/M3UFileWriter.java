@@ -1,7 +1,7 @@
 package com.m3u.parser.service.transformer;
 
-import com.m3u.parser.controller.model.M3UChanel;
 import com.m3u.parser.controller.model.M3UChanelGroup;
+import com.m3u.parser.controller.model.M3UChannel;
 import com.m3u.parser.controller.model.M3UDocument;
 import com.m3u.parser.controller.model.M3UGroup;
 import lombok.SneakyThrows;
@@ -26,7 +26,7 @@ public class M3UFileWriter {
 
         for (M3UGroup group : document.getGroupList()) {
             for (M3UChanelGroup channelGroup : group.getChanelGroups()) {
-                for (M3UChanel subChannel : channelGroup.getChanelList()) {
+                for (M3UChannel subChannel : channelGroup.getChanelList()) {
                     writer.write(subChannel.getLine() + "\n");
                     writer.write(subChannel.getAccessUrl() + "\n");
                 }

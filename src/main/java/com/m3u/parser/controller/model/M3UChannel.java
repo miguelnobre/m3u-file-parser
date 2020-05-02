@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class M3UChanel {
+public class M3UChannel {
     private M3UAttributes attributes;
     private String line;
     private String accessUrl;
