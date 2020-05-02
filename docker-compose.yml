@@ -1,0 +1,12 @@
+version: '3.1'
+services:
+  instance_1:
+    container_name: m3u_file_parser_1
+    image: m3u-file-parser:latest
+    ports:
+      - '8080:8080'
+  instance_2:
+    container_name: m3u_file_parser_2
+    image: m3u-file-parser:latest
+    ports:
+      - '8081:8080'
