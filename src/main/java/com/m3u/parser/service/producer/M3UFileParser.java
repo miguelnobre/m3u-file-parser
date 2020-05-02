@@ -2,6 +2,7 @@ package com.m3u.parser.service.producer;
 
 import com.m3u.parser.controller.enums.EChannelQuality;
 import com.m3u.parser.controller.model.*;
+import com.m3u.parser.exception.FileFormatNotSupported;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -23,6 +24,16 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 public class M3UFileParser {
 
     private static Pattern CHANNEL_NAME_PATTERN = Pattern.compile("#+\\s+(.*?)\\s+#+");
+    private static String FILE_TYPE = "#EXTM3U";
+
+    public static void main(String[] args) {
+        String str = "## AFFF ##";
+        Pattern pattern = Pattern.compile("#+\\s+(.*?)\\s+#+");
+        Matcher matcher = pattern.matcher(str);
+        while (matcher.find()) {
+            System.out.println("|" + matcher.group(1) + "|");
+        }
+    }
 
     @SneakyThrows
     private M3UAttributes getLineAttributes(String line) {
@@ -98,61 +109,66 @@ public class M3UFileParser {
         }
     }
 
-    public static void main(String[] args) {
-        String str = "## AFFF ##";
-        Pattern pattern = Pattern.compile("#+\\s+(.*?)\\s+#+");
-        Matcher matcher = pattern.matcher(str);
-        while (matcher.find()) {
-            System.out.println("|" + matcher.group(1) + "|");
-        }
+    private static boolean isM3UFile(String header) {
+        return FILE_TYPE.equalsIgnoreCase(header);
     }
 
-    @SneakyThrows
     public M3UDocument parse(URL fileLocation) {
         log.info("Reading file from {}", fileLocation.getPath());
 
-        BufferedReader reader = new BufferedReader(new InputStreamReader(fileLocation.openStream()));
-        Map<String, M3UGroup> groupMap = new HashMap<>();
-        Map<String, M3UChanelGroup> channelsGroupMap = new HashMap<>();
+        M3UDocument m3UDocument = null;
 
-        String initialLine = reader.readLine();
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(fileLocation.openStream()))) {
+            Map<String, M3UGroup> groupMap = new HashMap<>();
+            Map<String, M3UChanelGroup> channelsGroupMap = new HashMap<>();
 
-        String line;
-        while ((line = reader.readLine()) != null) {
-            M3UAttributes attributes = getLineAttributes(line);
+            String initialLine = reader.readLine();
 
-            M3UChanel channel = M3UChanel.builder()
-                    .attributes(attributes)
-                    .line(line)
-                    .accessUrl(reader.readLine())   // Read next line
-                    .build();
-
-            M3UChanelGroup channelGroup = channelsGroupMap.get(channel.getAttributes().getId());
-            if (channelGroup != null) {
-                channelGroup.getChanelList().add(channel);
-                continue;
+            if (!isM3UFile(initialLine)) {
+                throw new FileFormatNotSupported("File type not supported. Please provide a M3U file.");
             }
 
-            M3UChanelGroup newChannelGroup = createChannelsGroup(channelsGroupMap, channel.getAttributes().getId());
-            newChannelGroup.getChanelList().add(channel);
+            String line;
+            while ((line = reader.readLine()) != null) {
+                M3UAttributes attributes = getLineAttributes(line);
 
-            if (isNotBlank(channel.getAttributes().getId())) {
-                channelsGroupMap.putIfAbsent(channel.getAttributes().getId(), newChannelGroup);
+                M3UChanel channel = M3UChanel.builder()
+                        .attributes(attributes)
+                        .line(line)
+                        .accessUrl(reader.readLine())   // Read next line
+                        .build();
+
+                M3UChanelGroup channelGroup = channelsGroupMap.get(channel.getAttributes().getId());
+                if (channelGroup != null) {
+                    channelGroup.getChanelList().add(channel);
+                    continue;
+                }
+
+                M3UChanelGroup newChannelGroup = createChannelsGroup(channelsGroupMap, channel.getAttributes().getId());
+                newChannelGroup.getChanelList().add(channel);
+
+                if (isNotBlank(channel.getAttributes().getId())) {
+                    channelsGroupMap.putIfAbsent(channel.getAttributes().getId(), newChannelGroup);
+                }
+
+                String groupKey = isNotBlank(channel.getAttributes().getGroupTitle())
+                        ? channel.getAttributes().getGroupTitle()
+                        : getChannelNameSanitized(attributes.getName());
+
+                Optional.ofNullable(groupMap.get(groupKey))
+                        .orElseGet(() -> createGroup(groupMap, groupKey))
+                        .getChanelGroups()
+                        .add(newChannelGroup);
+
+                m3UDocument = M3UDocument.builder()
+                        .initialLine(initialLine)
+                        .groupList(List.copyOf(groupMap.values()))
+                        .build();
             }
-
-            String groupKey = isNotBlank(channel.getAttributes().getGroupTitle())
-                    ? channel.getAttributes().getGroupTitle()
-                    : getChannelNameSanitized(attributes.getName());
-
-            Optional.ofNullable(groupMap.get(groupKey))
-                    .orElseGet(() -> createGroup(groupMap, groupKey))
-                    .getChanelGroups()
-                    .add(newChannelGroup);
+        } catch (Exception e) {
+            log.error("Error trying to access remote file.", e);
         }
 
-        return M3UDocument.builder()
-                .initialLine(initialLine)
-                .groupList(List.copyOf(groupMap.values()))
-                .build();
+        return m3UDocument;
     }
 }

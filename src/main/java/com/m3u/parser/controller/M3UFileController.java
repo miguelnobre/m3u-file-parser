@@ -6,7 +6,6 @@ import io.swagger.annotations.ApiOperation;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.core.io.InputStreamResource;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -37,9 +36,8 @@ public class M3UFileController {
                 .map(file -> ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=etc.m3u")
                         .contentLength(file.length())
-                        .contentType(MediaType.parseMediaType("application/pdf"))
                         .body(new InputStreamResource(new FileInputStream(file)))
-                ).blockingGet();
+                ).blockingGet(ResponseEntity.notFound().build());
 
     }
 }
