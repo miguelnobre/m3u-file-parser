@@ -13,4 +13,8 @@ public enum EChannelQuality {
 
     @Getter
     private int level;
+
+    public boolean isEqualOrGreaterThan(EChannelQuality compareTo) {
+        return getLevel() >= compareTo.getLevel();
+    }
 }

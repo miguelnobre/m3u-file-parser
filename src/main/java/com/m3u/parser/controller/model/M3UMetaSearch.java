@@ -45,5 +45,4 @@ public class M3UMetaSearch {
     public EChannelQuality getChannelQuality() {
         return this.m3UChannel.getAttributes().getChannelQuality();
     }
-
 }

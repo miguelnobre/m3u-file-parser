@@ -76,7 +76,6 @@
             <artifactId>rxjava</artifactId>
             <version>3.0.0-RC1</version>
         </dependency>
-
     </dependencies>
 
     <build>

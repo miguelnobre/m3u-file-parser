@@ -1,5 +1,6 @@
 package com.m3u.parser.controller;
 
+import com.m3u.parser.controller.enums.EChannelQuality;
 import com.m3u.parser.service.M3UDownloadFileService;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -32,6 +33,7 @@ public class M3UFileController {
     //using raw type because swagger doc doesn't support InputStreamResource
     public ResponseEntity<StreamingResponseBody> download(@RequestParam String fileUrl,
                                                           @RequestParam(required = false, defaultValue = "") Set<String> categoryFilter,
+                                                          @RequestParam(required = false, defaultValue = "MOBILE") EChannelQuality minimumChannelQuality,
                                                           final HttpServletResponse response) {
 
         response.setContentType(MediaType.APPLICATION_OCTET_STREAM.toString());
@@ -39,7 +41,7 @@ public class M3UFileController {
 
         StreamingResponseBody streamingResponseBody = outputStream -> {
 
-            m3UDownloadFileService.downloadFile2(fileUrl, categoryFilter)
+            m3UDownloadFileService.downloadFile2(fileUrl, categoryFilter, minimumChannelQuality)
                     .doOnSubscribe(subscription -> outputStream.write("#EXTM3U".getBytes()))
                     .blockingSubscribe(m3UChannel -> {
                         outputStream.write(System.lineSeparator().getBytes());

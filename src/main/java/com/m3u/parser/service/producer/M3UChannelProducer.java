@@ -6,14 +6,18 @@ import com.m3u.parser.controller.model.M3UChannel;
 import com.m3u.parser.exception.FileFormatNotSupported;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.Iterator;
 
 @RequiredArgsConstructor
+@Slf4j
 public class M3UChannelProducer implements Publisher<M3UChannel> {
     private static String FILE_TYPE = "#EXTM3U";
     private final String m3uFileLocation;
@@ -68,31 +72,51 @@ public class M3UChannelProducer implements Publisher<M3UChannel> {
         }
     }
 
+    @SneakyThrows
     @Override
     public void subscribe(Subscriber<? super M3UChannel> subscriber) {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new URL(this.m3uFileLocation).openStream()))) {
 
-            if (!isM3UFile(reader.readLine())) {
+        try {
+            final BufferedReader reader = new BufferedReader(new InputStreamReader(new URL(this.m3uFileLocation).openStream()));
+            Iterator<String> linesIterator = reader.lines().iterator();
+
+            if (!isM3UFile(linesIterator.next())) {
                 throw new FileFormatNotSupported("File type not supported. Please provide a M3U file.");
             }
 
-            String line;
-            while ((line = reader.readLine()) != null) {
-                M3UAttributes attributes = getLineAttributes(line);
+            subscriber.onSubscribe(new Subscription() {
 
-                M3UChannel channel = M3UChannel.builder()
-                        .attributes(attributes)
-                        .line(line)
-                        .accessUrl(reader.readLine())   // Read next line
-                        .build();
+                @Override
+                public void request(long n) {
 
-                subscriber.onNext(channel);
-            }
+                    while (linesIterator.hasNext() && --n > 0) {
+                        String line = linesIterator.next();
+                        M3UAttributes attributes = getLineAttributes(line);
+
+                        M3UChannel channel = M3UChannel.builder()
+                                .attributes(attributes)
+                                .line(line)
+                                .accessUrl(linesIterator.next())   // Read next line
+                                .build();
+
+                        subscriber.onNext(channel);
+                        log.info("New channel submitted: {} ", channel);
+                    }
+                    if (n > 0) {
+                        subscriber.onComplete();
+                    }
+                }
+
+                @SneakyThrows
+                @Override
+                public void cancel() {
+                    reader.close();
+                }
+            });
         } catch (Exception exception) {
             subscriber.onError(exception);
-        } finally {
-            subscriber.onComplete();
         }
+
     }
 
 }
