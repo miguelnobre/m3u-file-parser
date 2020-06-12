@@ -11,7 +11,7 @@
     </parent>
 
     <groupId>com.m3u</groupId>
-    <artifactId>parser</artifactId>
+    <artifactId>m3u-file-parser</artifactId>
     <version>0.0.1-SNAPSHOT</version>
     <name>Parser</name>
     <description>M3U File Parser</description>

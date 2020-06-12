@@ -30,9 +30,10 @@ public class M3UFileController {
     @ApiOperation(value = "Download M3U file", notes = "Filter and download m3u file")
     //using raw type because swagger doc doesn't support InputStreamResource
     public ResponseEntity download(@RequestParam String fileUrl,
-                                   @RequestParam(required = false, defaultValue = "") Set<String> categoryFilter) {
+                                   @RequestParam(required = false, defaultValue = "") Set<String> categoryFilter,
+                                   @RequestParam(required = false) boolean onlyBestQualityChannel) {
 
-        return this.m3UDownloadFileService.downloadFile(new URL(fileUrl), categoryFilter)
+        return this.m3UDownloadFileService.downloadFile(new URL(fileUrl), categoryFilter, onlyBestQualityChannel)
                 .map(file -> ResponseEntity.ok()
                         .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=etc.m3u")
                         .contentLength(file.length())
